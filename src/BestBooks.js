@@ -15,7 +15,7 @@ class MyFavoriteBooks extends React.Component {
     }
   }
 
-  makeRequest = async () => {
+  componentDidMount = async () => {
 
     const { getIdTokenClaims } = this.props.auth0;
     let tokenClaims = await getIdTokenClaims();
@@ -25,44 +25,34 @@ class MyFavoriteBooks extends React.Component {
       headers: { "Authorization": `Bearer ${jwt}` },
     };
     try {
-      const serverResponse = await axios.get(`${process.env.REACT_APP_SERVER}/test`, config);
-      console.log('it worked', serverResponse);
-      this.getBooks();
+      const booksData = await axios.get(`${process.env.REACT_APP_SERVER}/books`, config);
+      console.log('it worked');
+      this.setState({
+        booksToRender: booksData.data
+      });
+      console.log(this.state.booksToRender);
     } catch (error) {
-      console.log('Authenitcation error', error)
+      console.log('Authenitcation error', error);
     }
-  }
-
-  getBooks = async () => {
-    const booksData = await axios.get(`${process.env.REACT_APP_SERVER}/books`);
-    console.log('These are the books in database:', booksData);
-    this.setState({
-      booksToRender: booksData.data
-    })
-    console.log('Books in state:', this.state.booksToRender);
-  }
+  } 
 
   render() {
     const { user } = this.props.auth0;
 
     return (
       <>
-        <Jumbotron>
+        <Jumbotron id="jumbotron">
           <h1>My Favorite Books</h1>
           <p>
             This is a collection of my favorite books
           </p>
-          {user ?
-            <button onClick={this.makeRequest}>Make Request to Server</button>
+          {this.state.booksToRender.length !== 0 && user ?
+            <Book
+              data={this.state.booksToRender}
+            />
             : ''
           }
         </Jumbotron>
-        {this.state.booksToRender.length !== 0 ?
-          <Book
-            data={this.state.booksToRender}
-          />
-          : ''
-        }
       </>
     )
   }
