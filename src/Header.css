@@ -6,3 +6,7 @@ a{
 a:hover{
   color:darkgrey;
 }
+
+.navbar {
+  justify-content: space-between;
+}

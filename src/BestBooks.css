@@ -1,7 +1,4 @@
 .jumbotron{
-  margin-bottom: 0;
-}
-
-h3 {
-  color: blue;
+  margin: auto;
+  text-align: center;
 }
