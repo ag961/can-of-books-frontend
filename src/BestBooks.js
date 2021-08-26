@@ -16,7 +16,31 @@ class MyFavoriteBooks extends React.Component {
     this.state = {
       booksToRender: [],
       modalVisible: false,
+      updating: false,
+      selectedBook: null
     }
+  }
+
+
+  showModal = () => {
+    this.setState({
+      modalVisible: true
+    })
+  }
+
+  showUpdateModal = (book) => {
+    this.setState({
+      modalVisible: true,
+      updating: true,
+      selectedBook: book
+    })
+  }
+
+  closeModal = () => {
+    this.setState({
+      modalVisible: false,
+      updating: false
+    })
   }
 
   componentDidMount = async () => {
@@ -25,40 +49,25 @@ class MyFavoriteBooks extends React.Component {
     let tokenClaims = await getIdTokenClaims();
     const jwt = tokenClaims.__raw;
     const config = {
-      headers: { "Authorization": `Bearer ${jwt}` },
+      headers: { authorization: `Bearer ${jwt}` },
       params: { email: this.props.auth0.user.email },
     };
     try {
       const booksData = await axios.get(`${process.env.REACT_APP_SERVER}/books`, config);
-      console.log('it worked');
       this.setState({
         booksToRender: booksData.data
       });
-      console.log(this.state.booksToRender);
     } catch (error) {
-      console.log('Authenitcation error', error);
+      console.log(error.response.status, error.message);
     }
-  }
-
-  showModal = () => {
-    this.setState({
-      modalVisible: true
-    })
-  }
-
-  closeModal = () => {
-    this.setState({
-      modalVisible: false
-    })
   }
 
   createBook = async (title, description) => {
     const { getIdTokenClaims } = this.props.auth0;
     let tokenClaims = await getIdTokenClaims();
     const jwt = tokenClaims.__raw;
-    console.log('create book jwt', jwt);
     const config = {
-      headers: { "Authorization": `Bearer ${jwt}` },
+      headers: { authorization: `Bearer ${jwt}` },
       params: {
         "title": title,
         "description": description,
@@ -68,8 +77,7 @@ class MyFavoriteBooks extends React.Component {
     };
     try {
       let response = await axios.post(`${process.env.REACT_APP_SERVER}/books`, config);
-      let createdBookData = response.data;
-      console.log('newly added book: ', createdBookData);
+      let createdBookData = response.data;     
       this.setState({
         booksToRender: [...this.state.booksToRender, createdBookData]
       })
@@ -78,25 +86,60 @@ class MyFavoriteBooks extends React.Component {
     };
   }
 
-  handleDelete = async (id) => {
+  updateBook = async (book) => {
+
     const { getIdTokenClaims } = this.props.auth0;
     let tokenClaims = await getIdTokenClaims();
     const jwt = tokenClaims.__raw;
-    console.log('delete book jwt', jwt);
+
     const config = {
-      headers: { "Authorization": `Bearer ${jwt}` },
-      params: { email: this.props.auth0.user.email }
+      headers: { authorization: `Bearer ${jwt}` },
+      params: {
+        "title": book.title,
+        "description": book.description,
+        "status": book.status,
+        "email": this.props.auth0.user.email
+      }
     };
     try {
-      await axios.delete(`${process.env.REACT_APP_SERVER}/books/${id}`, config)
+      await axios.put(`${process.env.REACT_APP_SERVER}/books/${book._id}`, config);
+
+      const updatedBooksArr = this.state.booksToRender.map(oldBook => {
+        if (oldBook._id === book._id) {
+          return book;
+        } else {
+          return oldBook;
+        }
+      });
+
+      this.setState({
+        booksToRender: updatedBooksArr
+      })
+
+    } catch (error) {
+      console.log(error.response.status, error.message);
+    }
+  }
+
+  handleDelete = async (id) => {
+    const { getIdTokenClaims } = this.props.auth0;
+    let tokenClaims = await getIdTokenClaims();
+    const jwt = tokenClaims.__raw;    
+    const config = {
+      headers: { authorization: `Bearer ${jwt}` },
+      params: { email: this.props.auth0.user.email }
+    };
+
+    try {
+      await axios.delete(`${process.env.REACT_APP_SERVER}/books/${id}`, config);
+
       let remainingBooks = this.state.booksToRender.filter(book => book._id !== id);
       this.setState({
         booksToRender: remainingBooks
-      })
-      console.log(this.state.booksToRender);
+      })    
     }
-    catch (err) {
-      console.log(err);
+    catch (error) {
+      console.log(error.response.status, error.message);
     }
   }
 
@@ -112,7 +155,10 @@ class MyFavoriteBooks extends React.Component {
         <Carousel.Caption>
           <h3>{book.title}</h3>
           <p>{book.description}</p>
-          <Button variant="danger" onClick={() => this.handleDelete(book._id)}>Delete</Button>
+          <div id="carouselBtn">
+            <Button variant="info" onClick={() => this.showUpdateModal(book)}>Update</Button>
+            <Button variant="danger" onClick={() => this.handleDelete(book._id)}>Delete</Button>
+          </div>
         </Carousel.Caption>
       </Carousel.Item>
     ))
@@ -130,13 +176,16 @@ class MyFavoriteBooks extends React.Component {
               </Carousel>
             </Container>
             : ''}
-          <button onClick={this.showModal}>Add new book
-          </button>
+          <Button variant="success" onClick={this.showModal}>Add new book
+          </Button>
         </Jumbotron>
         <BookFormModal
           modalVisible={this.state.modalVisible}
           closeModal={this.closeModal}
           createBook={this.createBook}
+          updating={this.state.updating}
+          selectedBook={this.state.selectedBook}
+          updateBook={this.updateBook}
         />
       </>
     )

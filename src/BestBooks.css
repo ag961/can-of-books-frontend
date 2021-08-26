@@ -7,3 +7,10 @@
   width: 60%;
   margin: auto;
 }
+
+#carouselBtn {
+  margin-top: 10%;
+  margin-bottom: 3%;
+  display: flex;
+  justify-content: space-evenly;
+}

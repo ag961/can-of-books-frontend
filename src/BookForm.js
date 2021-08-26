@@ -6,18 +6,18 @@ import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
 
 class BookForm extends React.Component {
-
-  handleSubmit = (e) => {
+ 
+  handleSubmitCreate = (e) => {
     e.preventDefault();
     let title = e.target.title.value;
-    let description = e.target.description.value;
-    console.log(title, description);
+    let description = e.target.description.value;    
     this.props.createBook(title, description);
+    this.props.closeModal()
   }
-
+ 
   render() {
     return (
-      <Form onSubmit={this.handleSubmit}>
+      <Form onSubmit={this.props.updating ? this.handleSubmitUpdate : this.handleSubmitCreate}>
         <Form.Group controlId="title">
           <Form.Label >Title</Form.Label>
           <Form.Control placeholder="Type in the title" />
@@ -42,8 +42,7 @@ class BookForm extends React.Component {
             </Col>
           </Form.Group>
         </fieldset>
-        <Button
-          onClick={this.props.closeModal}
+        <Button          
           variant="primary"
           type="submit">
           Submit
